@@ -2,7 +2,7 @@ import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: [
-    './src/**/*.{ts,tsx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
     '../../packages/ui-components/src/**/*.{ts,tsx}',
   ],
   darkMode: 'class',
@@ -54,6 +54,15 @@ const config: Config = {
         '2xl': '24px',
         '3xl': '30px',
         display: '48px',
+      },
+      maxWidth: {
+        content: '1400px',
+      },
+      width: {
+        sidebar: '240px',
+      },
+      spacing: {
+        sidebar: '240px',
       },
     },
   },
