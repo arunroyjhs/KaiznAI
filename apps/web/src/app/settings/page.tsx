@@ -14,7 +14,7 @@ const SETTINGS_SECTIONS = [
   {
     href: '/settings/billing',
     title: 'Billing',
-    description: 'Manage your subscription, upgrade plans, and view billing history.',
+    description: 'Manage your subscription, upgrade plans, and view invoices.',
   },
   {
     href: '#',
@@ -30,6 +30,21 @@ const SETTINGS_SECTIONS = [
     href: '#',
     title: 'Notifications',
     description: 'Configure Slack, email, and webhook notifications for gates.',
+  },
+  {
+    href: '/settings/sso',
+    title: 'Single Sign-On',
+    description: 'Configure SAML/OIDC for your organization.',
+  },
+  {
+    href: '/settings/audit',
+    title: 'Audit Log',
+    description: 'View a complete record of all actions in your workspace.',
+  },
+  {
+    href: '/settings/compliance',
+    title: 'Compliance & Export',
+    description: 'Data exports for regulatory compliance and GDPR requests.',
   },
 ];
 
