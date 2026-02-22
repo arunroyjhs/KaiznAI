@@ -1,0 +1,13 @@
+{
+  "name": "@outcome-runtime/signal-source-datadog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@outcome-runtime/signal-collector": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

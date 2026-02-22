@@ -10,3 +10,5 @@ export type {
   GateNotification,
   NotificationChannel,
 } from './types.js';
+
+// Slack integration available at @outcome-runtime/notification-slack
