@@ -68,7 +68,12 @@ export function buildHypothesisPrompt(
   signalMetric: string,
   allowedPaths: string[],
   forbiddenPaths: string[],
+  pastLearnings: string[] = [],
 ): string {
+  const learningLines = pastLearnings.length > 0
+    ? `\nRelevant learnings from past experiments:\n${pastLearnings.map((l) => `- ${l}`).join('\n')}\n\nUse these learnings to inform your candidates. Avoid approaches that have been refuted. Build on confirmed findings.`
+    : '';
+
   return `Sub-problem: ${subProblem.description}
 Metric lever: ${subProblem.metric_lever}
 Outcome: ${outcomeTitle}
@@ -77,6 +82,6 @@ Primary Signal: ${signalMetric}
 Scope constraints:
 - Allowed paths: ${allowedPaths.length > 0 ? allowedPaths.join(', ') : 'any'}
 - Forbidden paths: ${forbiddenPaths.length > 0 ? forbiddenPaths.join(', ') : 'none'}
-
+${learningLines}
 Generate 2-3 experiment candidates for this sub-problem. Each candidate should be a distinct approach to solving this sub-problem.`;
 }

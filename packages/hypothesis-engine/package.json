@@ -23,7 +23,8 @@
   "dependencies": {
     "zod": "^3.23.0",
     "@outcome-runtime/core": "workspace:*",
-    "@outcome-runtime/llm-gateway": "workspace:*"
+    "@outcome-runtime/llm-gateway": "workspace:*",
+    "@outcome-runtime/learning-library": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
