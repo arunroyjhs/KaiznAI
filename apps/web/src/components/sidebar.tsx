@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/gates', label: 'Gates', icon: '⊘', badge: true },
   { href: '/signals', label: 'Signals', icon: '∿' },
   { href: '/learnings', label: 'Learnings', icon: '◈' },
+  { href: '/fleet', label: 'Fleet', icon: '⬢' },
   { href: '/settings', label: 'Settings', icon: '⚙' },
 ];
 

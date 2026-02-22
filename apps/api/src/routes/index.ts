@@ -6,6 +6,7 @@ import { signalRoutes } from './signals.js';
 import { llmProviderRoutes } from './llm-providers.js';
 import { learningRoutes } from './learnings.js';
 import { workspaceRoutes } from './workspace.js';
+import { agentRoutes } from './agents.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(outcomeRoutes);
@@ -15,4 +16,5 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(llmProviderRoutes);
   await app.register(learningRoutes);
   await app.register(workspaceRoutes);
+  await app.register(agentRoutes);
 }
