@@ -12,6 +12,11 @@ const SETTINGS_SECTIONS = [
     description: 'Track LLM spend per provider. Monitor costs and optimize model selection.',
   },
   {
+    href: '/settings/billing',
+    title: 'Billing',
+    description: 'Manage your subscription, upgrade plans, and view billing history.',
+  },
+  {
     href: '#',
     title: 'Signal Connectors',
     description: 'Connect your analytics stack. Mixpanel, PostgreSQL, and more.',
