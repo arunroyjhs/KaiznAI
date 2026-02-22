@@ -12,3 +12,4 @@ export type {
 } from './types.js';
 export { AnthropicProvider } from './providers/anthropic.js';
 export { OpenAIProvider } from './providers/openai.js';
+export * from './oauth/index.js';

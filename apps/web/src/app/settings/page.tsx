@@ -1,3 +1,33 @@
+import Link from 'next/link';
+
+const SETTINGS_SECTIONS = [
+  {
+    href: '/settings/providers',
+    title: 'LLM Providers',
+    description: 'Connect your AI providers. Use your existing Claude, ChatGPT, or Perplexity subscription.',
+  },
+  {
+    href: '/settings/usage',
+    title: 'Token Usage',
+    description: 'Track LLM spend per provider. Monitor costs and optimize model selection.',
+  },
+  {
+    href: '#',
+    title: 'Signal Connectors',
+    description: 'Connect your analytics stack. Mixpanel, PostgreSQL, and more.',
+  },
+  {
+    href: '#',
+    title: 'Feature Flags',
+    description: 'Connect LaunchDarkly, Unleash, or your feature flag service.',
+  },
+  {
+    href: '#',
+    title: 'Notifications',
+    description: 'Configure Slack, email, and webhook notifications for gates.',
+  },
+];
+
 export default function SettingsPage() {
   return (
     <div>
@@ -8,37 +38,17 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid gap-6">
-        <section className="bg-surface rounded-lg border border-border p-6">
-          <h2 className="text-lg font-medium text-text-primary mb-4">LLM Providers</h2>
-          <p className="text-sm text-text-secondary">
-            Connect your AI providers. Use your existing Claude, ChatGPT, or Perplexity
-            subscription.
-          </p>
-          <button className="mt-4 px-4 py-2 text-sm bg-surface-elevated text-text-secondary border border-border rounded-md hover:bg-border hover:text-text-primary transition-colors">
-            Add Provider
-          </button>
-        </section>
-
-        <section className="bg-surface rounded-lg border border-border p-6">
-          <h2 className="text-lg font-medium text-text-primary mb-4">Signal Connectors</h2>
-          <p className="text-sm text-text-secondary">
-            Connect your analytics stack. Mixpanel, PostgreSQL, and more.
-          </p>
-          <button className="mt-4 px-4 py-2 text-sm bg-surface-elevated text-text-secondary border border-border rounded-md hover:bg-border hover:text-text-primary transition-colors">
-            Add Connector
-          </button>
-        </section>
-
-        <section className="bg-surface rounded-lg border border-border p-6">
-          <h2 className="text-lg font-medium text-text-primary mb-4">Feature Flags</h2>
-          <p className="text-sm text-text-secondary">
-            Connect LaunchDarkly, Unleash, or your feature flag service.
-          </p>
-          <button className="mt-4 px-4 py-2 text-sm bg-surface-elevated text-text-secondary border border-border rounded-md hover:bg-border hover:text-text-primary transition-colors">
-            Configure
-          </button>
-        </section>
+      <div className="grid gap-4">
+        {SETTINGS_SECTIONS.map((section) => (
+          <Link
+            key={section.title}
+            href={section.href}
+            className="bg-surface rounded-lg border border-border p-6 hover:border-border-strong transition-colors block"
+          >
+            <h2 className="text-lg font-medium text-text-primary mb-2">{section.title}</h2>
+            <p className="text-sm text-text-secondary">{section.description}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );

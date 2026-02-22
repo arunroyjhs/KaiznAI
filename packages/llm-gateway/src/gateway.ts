@@ -8,6 +8,8 @@ import type {
 } from './types.js';
 import { AnthropicProvider } from './providers/anthropic.js';
 import { OpenAIProvider } from './providers/openai.js';
+import { PerplexityProvider } from './providers/perplexity.js';
+import { OllamaProvider } from './providers/ollama.js';
 
 const PURPOSE_MODEL_MAP: Record<LLMPurpose, string> = {
   hypothesis_generation: 'claude-opus-4',
@@ -32,6 +34,8 @@ export class LLMGateway {
     this.providers = new Map();
     this.providers.set('anthropic', new AnthropicProvider());
     this.providers.set('openai', new OpenAIProvider());
+    this.providers.set('perplexity', new PerplexityProvider());
+    this.providers.set('ollama', new OllamaProvider());
   }
 
   async complete(request: LLMRequest, orgId: string): Promise<LLMResponse> {

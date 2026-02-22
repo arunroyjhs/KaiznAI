@@ -6,7 +6,7 @@ export type LLMPurpose =
   | 'context_summarization'
   | 'decision_synthesis';
 
-export type ProviderSlug = 'anthropic' | 'openai' | 'perplexity';
+export type ProviderSlug = 'anthropic' | 'openai' | 'perplexity' | 'ollama';
 export type AuthMode = 'api_key' | 'oauth_account';
 
 export interface Message {
