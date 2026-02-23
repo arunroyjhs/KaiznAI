@@ -26,7 +26,7 @@ export function OutcomeCard({
   experimentCount,
   unit,
 }: OutcomeCardProps) {
-  const styles = STATUS_STYLES[status] ?? STATUS_STYLES.draft;
+  const styles = (STATUS_STYLES[status] ?? STATUS_STYLES.draft)!;
 
   return (
     <div

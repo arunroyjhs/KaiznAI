@@ -152,7 +152,7 @@ function StatCard({
 }
 
 function AgentCard({ agent }: { agent: Agent }) {
-  const runtime = RUNTIME_COLORS[agent.runtime] ?? RUNTIME_COLORS['custom-rest'];
+  const runtime = (RUNTIME_COLORS[agent.runtime] ?? RUNTIME_COLORS['custom-rest'])!;
   const status = STATUS_CONFIG[agent.status];
 
   return (

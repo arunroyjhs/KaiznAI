@@ -3,4 +3,4 @@ const nextConfig = {
   transpilePackages: ['@outcome-runtime/ui-components'],
 };
 
-export default nextConfig;
+module.exports = nextConfig;
