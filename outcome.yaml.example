@@ -1,0 +1,96 @@
+# outcome.yaml — Outcome Runtime Configuration
+# Place in your repo root or specify path in workspace settings
+version: 1
+
+outcomes:
+  - id: checkout-abandonment-mobile
+    title: "Reduce Mobile Checkout Abandonment"
+    description: "Improve the mobile checkout completion rate from 32% to above 45%"
+
+    signal:
+      source: mixpanel
+      metric: checkout_completed
+      method: funnel
+      funnel_steps:
+        - cart_viewed
+        - checkout_started
+        - payment_entered
+        - order_confirmed
+      segment:
+        platform: mobile
+      aggregation: 7d_rolling
+
+    target:
+      direction: increase
+      from: 0.32
+      to: 0.45
+      confidence_required: 0.95
+
+    constraints:
+      - signal: payment_success_rate
+        min: 0.97
+        source: datadog
+        metric: payment.success_rate
+      - signal: checkout_p95_latency_ms
+        max: 800
+        source: datadog
+        metric: checkout.latency.p95
+      - rule: "No changes to payment provider integration files"
+      - rule: "No changes to order management service"
+
+    horizon: 6w
+
+    portfolio:
+      max_concurrent: 3
+
+    gates:
+      portfolio_review:
+        assigned_to: "pm@company.com"
+        sla: 24h
+        channel: "slack:#checkout-outcomes"
+      launch_approval:
+        assigned_to: "checkout-lead@company.com"
+        sla: 4h
+        channel: "slack:#checkout-outcomes"
+      analysis_review:
+        assigned_to: "pm@company.com"
+        sla: 48h
+
+    scope:
+      allowed_paths:
+        - "frontend/checkout/"
+        - "api/cart/"
+      forbidden_paths:
+        - "services/payments/"
+        - "services/orders/"
+        - "infra/"
+
+    llm_provider: anthropic
+
+llm:
+  default_provider: anthropic
+  hypothesis_model: claude-opus-4
+  analysis_model: claude-sonnet-4-5
+
+signal_connectors:
+  - name: mixpanel
+    type: mixpanel
+    config:
+      project_id: "${MIXPANEL_PROJECT_ID}"
+      service_account: "${MIXPANEL_SERVICE_ACCOUNT}"
+
+  - name: datadog
+    type: datadog
+    config:
+      api_key: "${DATADOG_API_KEY}"
+      app_key: "${DATADOG_APP_KEY}"
+
+feature_flags:
+  provider: launchdarkly
+  config:
+    sdk_key: "${LD_SDK_KEY}"
+
+notifications:
+  slack:
+    bot_token: "${SLACK_BOT_TOKEN}"
+    default_channel: "#outcome-runtime"

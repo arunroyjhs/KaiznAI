@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16-latest
+    environment:
+      POSTGRES_DB: outcome_runtime
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: outcome-runtime/api:latest
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@db:5432/outcome_runtime
+      REDIS_URL: redis://redis:6379
+      API_SECRET: ${API_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+
+  web:
+    image: outcome-runtime/web:latest
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3001
+    depends_on:
+      - api
+    ports:
+      - "80:3000"
+
+volumes:
+  postgres_data:

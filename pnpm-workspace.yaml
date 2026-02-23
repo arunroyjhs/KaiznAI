@@ -1,0 +1,7 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "integrations/signal-sources/*"
+  - "integrations/execution-targets/*"
+  - "integrations/notification-channels/*"
+  - "integrations/llm-providers/*"

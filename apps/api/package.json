@@ -1,0 +1,37 @@
+{
+  "name": "@outcome-runtime/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@fastify/helmet": "^12.0.0",
+    "@fastify/rate-limit": "^10.0.0",
+    "fastify": "^5.1.0",
+    "zod": "^3.23.0",
+    "@outcome-runtime/core": "workspace:*",
+    "@outcome-runtime/hypothesis-engine": "workspace:*",
+    "@outcome-runtime/signal-collector": "workspace:*",
+    "@outcome-runtime/human-gates": "workspace:*",
+    "@outcome-runtime/llm-gateway": "workspace:*",
+    "@outcome-runtime/learning-library": "workspace:*",
+    "@outcome-runtime/agent-sdk": "workspace:*",
+    "@outcome-runtime/auth": "workspace:*",
+    "@outcome-runtime/billing": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

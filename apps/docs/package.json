@@ -1,0 +1,10 @@
+{
+  "name": "@outcome-runtime/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Docs site - coming soon'",
+    "build": "echo 'Docs site - coming soon'",
+    "clean": "echo 'clean'"
+  }
+}
