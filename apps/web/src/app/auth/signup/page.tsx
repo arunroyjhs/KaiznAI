@@ -9,11 +9,39 @@ export default function SignUpPage() {
   const [orgName, setOrgName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Wire to Better Auth sign-up + create org
-    setTimeout(() => setIsLoading(false), 1000);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/sign-up/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Sign up failed');
+      }
+
+      // Create organization after successful sign-up
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+      await fetch(`${apiBase}/api/v1/workspace`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: crypto.randomUUID(), name: orgName }),
+      }).catch(() => {});
+
+      window.location.href = '/onboarding';
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -73,6 +101,10 @@ export default function SignUpPage() {
               required
             />
           </div>
+
+          {error && (
+            <p className="text-xs text-red-400">{error}</p>
+          )}
 
           <button
             type="submit"

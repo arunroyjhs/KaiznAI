@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { gateManager, gateStore } from '../services.js';
 
 const respondToGateSchema = z.object({
   status: z.enum(['approved', 'rejected', 'approved_with_conditions']),
@@ -12,17 +13,22 @@ export async function gateRoutes(app: FastifyInstance) {
   // Get all pending gates for user
   app.get('/api/v1/gates/pending', async (request, reply) => {
     const query = request.query as { assignedTo?: string; orgId?: string };
-
-    // TODO: Query pending gates
-    return reply.send({ data: [] });
+    const gates = await gateManager.getPendingGates(
+      query.assignedTo ?? '',
+      query.orgId ?? '',
+    );
+    return reply.send({ data: gates });
   });
 
   // Get gate detail
   app.get('/api/v1/gates/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const gate = await gateStore.findById(id);
 
-    // TODO: Query from database
-    return reply.send({ id, message: 'Gate detail endpoint' });
+    if (!gate) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: `Gate ${id} not found` });
+    }
+    return reply.send(gate);
   });
 
   // Human responds to gate
@@ -38,11 +44,19 @@ export async function gateRoutes(app: FastifyInstance) {
       });
     }
 
-    // TODO: Process gate response, transition experiment state
-    return reply.send({
-      id,
-      status: result.data.status,
-      message: `Gate ${result.data.status}`,
-    });
+    try {
+      const gate = await gateManager.respondToGate({
+        gateId: id,
+        status: result.data.status,
+        conditions: result.data.conditions,
+        responseNote: result.data.response_note,
+        decidedBy: result.data.decided_by,
+      });
+
+      return reply.send(gate);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to respond to gate';
+      return reply.status(404).send({ error: 'NOT_FOUND', message });
+    }
   });
 }

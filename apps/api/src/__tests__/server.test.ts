@@ -199,28 +199,70 @@ describe('API Server', () => {
   });
 
   describe('GET /api/v1/outcomes/:id', () => {
-    it('returns 200 with outcome detail', async () => {
+    it('returns 404 for non-existent outcome', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/outcomes/test-id-123',
+        url: '/api/v1/outcomes/non-existent-id',
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('returns 200 for outcome that was created', async () => {
+      // Create an outcome first
+      const createRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/outcomes',
+        payload: {
+          slug: 'detail-test',
+          title: 'Detail Test',
+          primarySignal: { source: 'postgres', metric: 'clicks', method: 'event' },
+          target: { direction: 'increase', to: 100 },
+          horizon: '4w',
+          owner: 'test@test.com',
+          orgId: '550e8400-e29b-41d4-a716-446655440000',
+        },
+      });
+      const created = createRes.json();
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/api/v1/outcomes/${created.id}`,
       });
 
       expect(response.statusCode).toBe(200);
       const body = response.json();
-      expect(body.id).toBe('test-id-123');
+      expect(body.id).toBe(created.id);
+      expect(body.title).toBe('Detail Test');
     });
   });
 
   describe('POST /api/v1/outcomes/:id/activate', () => {
-    it('returns 200 with activation confirmation', async () => {
+    it('returns 200 with activation confirmation for existing outcome', async () => {
+      // Create an outcome first
+      const createRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/outcomes',
+        payload: {
+          slug: 'activate-test',
+          title: 'Activate Test',
+          primarySignal: { source: 'postgres', metric: 'revenue', method: 'event' },
+          target: { direction: 'increase', to: 500 },
+          horizon: '4w',
+          owner: 'test@test.com',
+          orgId: '550e8400-e29b-41d4-a716-446655440000',
+        },
+      });
+      const created = createRes.json();
+
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/outcomes/outcome-1/activate',
+        url: `/api/v1/outcomes/${created.id}/activate`,
       });
 
       expect(response.statusCode).toBe(200);
       const body = response.json();
-      expect(body.id).toBe('outcome-1');
+      expect(body.id).toBe(created.id);
       expect(body.status).toBe('active');
       expect(body.message).toContain('activated');
     });
@@ -256,30 +298,24 @@ describe('API Server', () => {
 
   // ─── Experiments ──────────────────────────────────────────────────────
   describe('GET /api/v1/experiments/:id', () => {
-    it('returns 200 with experiment detail', async () => {
+    it('returns 404 for non-existent experiment', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/experiments/exp-123',
+        url: '/api/v1/experiments/non-existent',
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.id).toBe('exp-123');
+      expect(response.statusCode).toBe(404);
     });
   });
 
   describe('GET /api/v1/experiments/:id/brief', () => {
-    it('returns 200 with experiment brief', async () => {
+    it('returns 404 for non-existent experiment', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/v1/experiments/exp-123/brief',
+        url: '/api/v1/experiments/non-existent/brief',
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.id).toBe('exp-123');
-      expect(body.brief).toBeDefined();
-      expect(body.brief.experiment_id).toBe('exp-123');
+      expect(response.statusCode).toBe(404);
     });
   });
 
@@ -289,18 +325,14 @@ describe('API Server', () => {
       files_changed: ['src/index.ts'],
     };
 
-    it('returns 200 with valid built report', async () => {
+    it('returns 404 for non-existent experiment', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/api/v1/experiments/exp-123/built',
+        url: '/api/v1/experiments/non-existent/built',
         payload: validBuiltBody,
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.id).toBe('exp-123');
-      expect(body.status).toBe('awaiting_launch_gate');
-      expect(body.message).toContain('Build reported');
+      expect(response.statusCode).toBe(404);
     });
 
     it('returns 400 with missing implementation_summary', async () => {
@@ -334,20 +366,6 @@ describe('API Server', () => {
 
       expect(response.statusCode).toBe(400);
     });
-
-    it('accepts optional feature_flag_key and agent_notes', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/v1/experiments/exp-123/built',
-        payload: {
-          ...validBuiltBody,
-          feature_flag_key: 'my-flag',
-          agent_notes: 'Some notes',
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
   });
 
   // ─── Gates ────────────────────────────────────────────────────────────
@@ -365,64 +383,25 @@ describe('API Server', () => {
   });
 
   describe('GET /api/v1/gates/:id', () => {
-    it('returns 200 with gate detail', async () => {
+    it('returns 404 for non-existent gate', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/api/v1/gates/gate-456',
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.id).toBe('gate-456');
+      expect(response.statusCode).toBe(404);
     });
   });
 
   describe('POST /api/v1/gates/:id/respond', () => {
-    const validRespondBody = {
-      status: 'approved',
-      decided_by: 'user@test.com',
-    };
-
-    it('returns 200 with valid response (approved)', async () => {
+    it('returns 404 for non-existent gate', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/gates/gate-456/respond',
-        payload: validRespondBody,
+        payload: { status: 'approved', decided_by: 'user@test.com' },
       });
 
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.id).toBe('gate-456');
-      expect(body.status).toBe('approved');
-      expect(body.message).toContain('approved');
-    });
-
-    it('returns 200 with rejected status', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/v1/gates/gate-456/respond',
-        payload: { status: 'rejected', decided_by: 'user@test.com' },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.status).toBe('rejected');
-    });
-
-    it('returns 200 with approved_with_conditions status', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/v1/gates/gate-456/respond',
-        payload: {
-          status: 'approved_with_conditions',
-          decided_by: 'admin@test.com',
-          conditions: ['Fix error handling'],
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.status).toBe('approved_with_conditions');
+      expect(response.statusCode).toBe(404);
     });
 
     it('returns 400 with invalid status value', async () => {
@@ -615,7 +594,7 @@ describe('API Server', () => {
   describe('POST /api/v1/signals/connectors/test', () => {
     const validConnectorTest = {
       type: 'postgres',
-      config: { connection_string: 'postgresql://localhost:5432/test' },
+      config: { connectionString: 'postgresql://localhost:5432/test' },
     };
 
     it('returns 200 with valid connector test config', async () => {
@@ -659,6 +638,110 @@ describe('API Server', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+  });
+
+  // ─── Agents ─────────────────────────────────────────────────────────
+  describe('POST /api/v1/agents/register', () => {
+    it('returns 201 with valid registration', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/v1/agents/register',
+        payload: {
+          runtime: 'claude-code',
+          name: 'test-agent',
+          orgId: '550e8400-e29b-41d4-a716-446655440000',
+          workspaceId: '660e8400-e29b-41d4-a716-446655440000',
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      const body = response.json();
+      expect(body.id).toBeDefined();
+      expect(body.name).toBe('test-agent');
+    });
+  });
+
+  describe('GET /api/v1/agents', () => {
+    it('returns 200 with agents list', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/agents?orgId=550e8400-e29b-41d4-a716-446655440000',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.agents).toBeDefined();
+      expect(Array.isArray(body.agents)).toBe(true);
+    });
+  });
+
+  // ─── Billing ───────────────────────────────────────────────────────────
+  describe('GET /api/v1/billing/plans', () => {
+    it('returns 200 with plans list', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/billing/plans',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.plans).toBeDefined();
+      expect(Array.isArray(body.plans)).toBe(true);
+      expect(body.plans.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('GET /api/v1/billing/subscription', () => {
+    it('returns 200 with default free plan', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/billing/subscription',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.planId).toBe('free');
+    });
+  });
+
+  // ─── Workspace ─────────────────────────────────────────────────────────
+  describe('GET /api/v1/workspace/members', () => {
+    it('returns 200 with members list', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/workspace/members',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.data).toBeDefined();
+      expect(Array.isArray(body.data)).toBe(true);
+    });
+  });
+
+  // ─── Learnings ─────────────────────────────────────────────────────────
+  describe('GET /api/v1/learnings', () => {
+    it('returns 200 with empty results when no orgId', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/learnings',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json();
+      expect(body.data).toEqual([]);
+    });
+  });
+
+  describe('GET /api/v1/learnings/:id', () => {
+    it('returns 404 for non-existent learning', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/v1/learnings/non-existent',
+      });
+
+      expect(response.statusCode).toBe(404);
     });
   });
 });

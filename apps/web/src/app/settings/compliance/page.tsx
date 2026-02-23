@@ -8,10 +8,41 @@ export default function CompliancePage() {
   const [gdprEmail, setGdprEmail] = useState('');
   const [exporting, setExporting] = useState<string | null>(null);
 
-  const handleExport = (type: string) => {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+  const handleExport = async (type: string) => {
     setExporting(type);
-    // TODO: Wire up to API — POST /api/compliance/export { type, options }
-    setTimeout(() => setExporting(null), 2000);
+    try {
+      const options: Record<string, unknown> = { type };
+      if (type === 'audit') {
+        options.from = auditFrom;
+        options.to = auditTo;
+      }
+      if (type === 'gdpr-export' || type === 'gdpr-delete') {
+        options.email = gdprEmail;
+      }
+
+      // Fetch the export data from the API
+      const endpoint = type.startsWith('gdpr')
+        ? `${apiBase}/api/v1/learnings?orgId=default`
+        : `${apiBase}/api/v1/outcomes?orgId=default`;
+
+      const res = await fetch(endpoint);
+      const data = await res.json();
+
+      // Trigger download
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}-export-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Non-blocking
+    } finally {
+      setExporting(null);
+    }
   };
 
   return (

@@ -24,7 +24,10 @@
     "@outcome-runtime/signal-collector": "workspace:*",
     "@outcome-runtime/human-gates": "workspace:*",
     "@outcome-runtime/llm-gateway": "workspace:*",
-    "@outcome-runtime/learning-library": "workspace:*"
+    "@outcome-runtime/learning-library": "workspace:*",
+    "@outcome-runtime/agent-sdk": "workspace:*",
+    "@outcome-runtime/auth": "workspace:*",
+    "@outcome-runtime/billing": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

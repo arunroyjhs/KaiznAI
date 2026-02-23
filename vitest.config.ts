@@ -11,6 +11,8 @@ export default defineConfig({
       '@outcome-runtime/llm-gateway': resolve(__dirname, 'packages/llm-gateway/src/index.ts'),
       '@outcome-runtime/learning-library': resolve(__dirname, 'packages/learning-library/src/index.ts'),
       '@outcome-runtime/billing': resolve(__dirname, 'packages/billing/src/index.ts'),
+      '@outcome-runtime/agent-sdk': resolve(__dirname, 'packages/agent-sdk/src/index.ts'),
+      '@outcome-runtime/auth': resolve(__dirname, 'packages/auth/src/index.ts'),
     },
   },
   test: {

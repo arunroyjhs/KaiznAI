@@ -70,6 +70,44 @@ export default function OnboardingPage() {
   const [outcomeName, setOutcomeName] = useState('');
   const [metric, setMetric] = useState('');
   const [target, setTarget] = useState('');
+  const [llmTestResult, setLlmTestResult] = useState<string | null>(null);
+  const [signalTestResult, setSignalTestResult] = useState<string | null>(null);
+
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+  const testLLMConnection = async () => {
+    if (!selectedLLM || !apiKey) return;
+    setLlmTestResult('Testing...');
+    try {
+      const providerMap: Record<string, string> = { claude: 'anthropic', chatgpt: 'openai', perplexity: 'perplexity' };
+      const res = await fetch(`${apiBase}/api/v1/signals/connectors/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: providerMap[selectedLLM] ?? selectedLLM, config: { apiKey } }),
+      });
+      const data = await res.json();
+      setLlmTestResult(data.success ? 'Connection successful' : data.message ?? 'Test failed');
+    } catch {
+      setLlmTestResult('Connection test failed');
+    }
+  };
+
+  const testSignalConnection = async () => {
+    if (!selectedSignal || !signalKey) return;
+    setSignalTestResult('Testing...');
+    try {
+      const config = selectedSignal === 'postgresql' ? { connectionString: signalKey } : { apiKey: signalKey };
+      const res = await fetch(`${apiBase}/api/v1/signals/connectors/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: selectedSignal, config }),
+      });
+      const data = await res.json();
+      setSignalTestResult(data.success ? 'Connection successful' : data.message ?? 'Test failed');
+    } catch {
+      setSignalTestResult('Connection test failed');
+    }
+  };
 
   const canProceed = () => {
     switch (step) {
@@ -86,9 +124,50 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFinish = () => {
-    // TODO: Wire up to API — POST /api/onboarding with all collected data
-    // { name, orgName, llmProvider: selectedLLM, apiKey, signalSource: selectedSignal, signalKey, outcome: { name: outcomeName, metric, target } }
+  const handleFinish = async () => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+    try {
+      // 1. Create workspace
+      await fetch(`${apiBase}/api/v1/workspace`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgId: crypto.randomUUID(), name: orgName }),
+      });
+
+      // 2. Save LLM provider config
+      if (selectedLLM) {
+        const providerMap: Record<string, string> = { claude: 'anthropic', chatgpt: 'openai', perplexity: 'perplexity' };
+        const providerSlug = providerMap[selectedLLM] ?? selectedLLM;
+        await fetch(`${apiBase}/api/v1/llm/providers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: providerSlug,
+            auth_mode: 'api_key',
+            api_key: apiKey || undefined,
+            org_id: crypto.randomUUID(),
+          }),
+        });
+      }
+
+      // 3. Create the first outcome
+      await fetch(`${apiBase}/api/v1/outcomes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug: outcomeName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+          title: outcomeName,
+          primarySignal: { source: selectedSignal ?? 'manual', metric, method: 'event' },
+          target: { direction: 'increase', to: parseFloat(target) || 0 },
+          horizon: '30d',
+          owner: name,
+          orgId: crypto.randomUUID(),
+        }),
+      });
+    } catch {
+      // Non-blocking: proceed to dashboard even if API calls fail
+    }
+
     window.location.href = '/dashboard';
   };
 
@@ -205,7 +284,19 @@ export default function OnboardingPage() {
                     placeholder={selectedLLM === 'ollama' ? 'http://localhost:11434' : 'sk-...'}
                     className="w-full px-4 py-2 bg-void border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary"
                   />
-                  {/* TODO: Wire up connection test — POST /api/providers/test */}
+                  <button
+                    type="button"
+                    onClick={testLLMConnection}
+                    disabled={!apiKey}
+                    className="mt-2 px-3 py-1.5 text-xs bg-void border border-border rounded-md text-text-secondary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Test Connection
+                  </button>
+                  {llmTestResult && (
+                    <p className={`mt-1 text-xs ${llmTestResult.includes('successful') ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {llmTestResult}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -256,7 +347,19 @@ export default function OnboardingPage() {
                     }
                     className="w-full px-4 py-2 bg-void border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary"
                   />
-                  {/* TODO: Wire up connection test — POST /api/signals/test */}
+                  <button
+                    type="button"
+                    onClick={testSignalConnection}
+                    disabled={!signalKey}
+                    className="mt-2 px-3 py-1.5 text-xs bg-void border border-border rounded-md text-text-secondary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Test Connection
+                  </button>
+                  {signalTestResult && (
+                    <p className={`mt-1 text-xs ${signalTestResult.includes('successful') ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {signalTestResult}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

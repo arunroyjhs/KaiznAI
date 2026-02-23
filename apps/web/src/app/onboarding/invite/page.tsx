@@ -19,10 +19,20 @@ export default function InvitePage() {
   const [email, setEmail] = useState('');
   const [members, setMembers] = useState<InvitedMember[]>(DEMO_MEMBERS);
 
-  const handleInvite = () => {
+  const handleInvite = async () => {
     if (!email.trim() || !email.includes('@')) return;
 
-    // TODO: Wire up to API — POST /api/invites { email }
+    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+    try {
+      await fetch(`${apiBase}/api/v1/workspace/members/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), role: 'member' }),
+      });
+    } catch {
+      // Non-blocking: still add to local state
+    }
+
     setMembers((prev) => [
       ...prev,
       { email: email.trim(), status: 'pending', invitedAt: 'Just now' },

@@ -41,11 +41,10 @@ describe('authMiddleware', () => {
 
     await middleware(request, reply as any);
 
-    expect((request as AuthenticatedRequest).user).toEqual({
-      id: 'api-key-user',
-      email: 'api@placeholder.com',
-      role: 'admin',
-    });
+    const user = (request as AuthenticatedRequest).user;
+    expect(user.id).toMatch(/^apikey-/);
+    expect(user.email).toMatch(/@system$/);
+    expect(user.role).toBe('admin');
     expect(reply.status).not.toHaveBeenCalled();
   });
 
@@ -71,11 +70,10 @@ describe('authMiddleware', () => {
 
     await middleware(request, reply as any);
 
-    expect((request as AuthenticatedRequest).user).toEqual({
-      id: 'session-user',
-      email: 'user@placeholder.com',
-      role: 'member',
-    });
+    const user = (request as AuthenticatedRequest).user;
+    expect(user.id).toMatch(/^session-/);
+    expect(user.email).toBe('user@session.local');
+    expect(user.role).toBe('member');
     expect(reply.status).not.toHaveBeenCalled();
   });
 
@@ -103,7 +101,7 @@ describe('authMiddleware', () => {
 
     await middleware(request, reply as any);
 
-    expect((request as AuthenticatedRequest).user.id).toBe('api-key-user');
+    expect((request as AuthenticatedRequest).user.id).toMatch(/^apikey-/);
   });
 });
 

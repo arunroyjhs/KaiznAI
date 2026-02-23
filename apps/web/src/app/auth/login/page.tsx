@@ -7,11 +7,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [error, setError] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // TODO: Wire to Better Auth sign-in
-    setTimeout(() => setIsLoading(false), 1000);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/sign-in/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Invalid email or password');
+      }
+
+      window.location.href = '/dashboard';
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,6 +66,10 @@ export default function LoginPage() {
               required
             />
           </div>
+
+          {error && (
+            <p className="text-xs text-red-400">{error}</p>
+          )}
 
           <button
             type="submit"

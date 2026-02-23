@@ -47,6 +47,15 @@ importers:
       '@fastify/rate-limit':
         specifier: ^10.0.0
         version: 10.3.0
+      '@outcome-runtime/agent-sdk':
+        specifier: workspace:*
+        version: link:../../packages/agent-sdk
+      '@outcome-runtime/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@outcome-runtime/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@outcome-runtime/core':
         specifier: workspace:*
         version: link:../../packages/core

@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { outcomeStore, experimentStore, signalStore, learningLibrary } from '../services.js';
 
 const createOutcomeSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
@@ -42,10 +43,14 @@ export async function outcomeRoutes(app: FastifyInstance) {
     const page = parseInt(query.page ?? '1', 10);
     const limit = parseInt(query.limit ?? '20', 10);
 
-    // TODO: Query from database
+    if (!query.orgId) {
+      return reply.send({ data: [], pagination: { page, limit, total: 0 } });
+    }
+
+    const result = outcomeStore.findByOrgId(query.orgId, page, limit);
     return reply.send({
-      data: [],
-      pagination: { page, limit, total: 0 },
+      data: result.data,
+      pagination: { page, limit, total: result.total },
     });
   });
 
@@ -60,15 +65,14 @@ export async function outcomeRoutes(app: FastifyInstance) {
       });
     }
 
-    // TODO: Insert into database
-    const outcome = {
+    const outcome = outcomeStore.create({
       id: crypto.randomUUID(),
       ...result.data,
       status: 'draft',
       secondarySignals: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    };
+    });
 
     return reply.status(201).send(outcome);
   });
@@ -76,27 +80,46 @@ export async function outcomeRoutes(app: FastifyInstance) {
   // Get outcome detail
   app.get('/api/v1/outcomes/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const outcome = outcomeStore.findById(id);
 
-    // TODO: Query from database
-    return reply.send({ id, message: 'Outcome detail endpoint' });
+    if (!outcome) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: `Outcome ${id} not found` });
+    }
+    return reply.send(outcome);
   });
 
   // Update outcome (draft only)
   app.put('/api/v1/outcomes/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const existing = outcomeStore.findById(id);
 
-    // TODO: Check status is draft, then update
-    return reply.send({ id, message: 'Outcome updated' });
+    if (!existing) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: `Outcome ${id} not found` });
+    }
+    if (existing.status !== 'draft') {
+      return reply.status(409).send({
+        error: 'CONFLICT',
+        message: `Outcome is ${existing.status}, only draft outcomes can be updated`,
+      });
+    }
+
+    const updates = request.body as Record<string, unknown>;
+    const updated = outcomeStore.update(id, updates);
+    return reply.send(updated);
   });
 
   // Activate outcome (triggers hypothesis generation)
   app.post('/api/v1/outcomes/:id/activate', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const existing = outcomeStore.findById(id);
 
-    // TODO: Validate outcome, trigger hypothesis engine
+    if (!existing) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: `Outcome ${id} not found` });
+    }
+
+    const updated = outcomeStore.update(id, { status: 'active' });
     return reply.send({
-      id,
-      status: 'active',
+      ...updated,
       message: 'Outcome activated — hypothesis generation started',
     });
   });
@@ -104,24 +127,27 @@ export async function outcomeRoutes(app: FastifyInstance) {
   // List experiments for outcome
   app.get('/api/v1/outcomes/:id/experiments', async (request, reply) => {
     const { id } = request.params as { id: string };
-
-    // TODO: Query experiments by outcome_id
-    return reply.send({ outcomeId: id, data: [] });
+    const experiments = experimentStore.findByOutcomeId(id);
+    return reply.send({ outcomeId: id, data: experiments });
   });
 
   // Time-series signal data for outcome
   app.get('/api/v1/outcomes/:id/signals', async (request, reply) => {
     const { id } = request.params as { id: string };
-
-    // TODO: Query signal_measurements by outcome_id
-    return reply.send({ outcomeId: id, data: [] });
+    const signals = signalStore.findByOutcomeId(id);
+    return reply.send({ outcomeId: id, data: signals });
   });
 
   // Relevant past learnings for outcome
   app.get('/api/v1/outcomes/:id/learnings', async (request, reply) => {
     const { id } = request.params as { id: string };
+    const query = request.query as { orgId?: string };
 
-    // TODO: Query learnings by outcome_id
-    return reply.send({ outcomeId: id, data: [] });
+    if (!query.orgId) {
+      return reply.send({ outcomeId: id, data: [] });
+    }
+
+    const learnings = await learningLibrary.getRelevantLearnings(id, query.orgId);
+    return reply.send({ outcomeId: id, data: learnings });
   });
 }

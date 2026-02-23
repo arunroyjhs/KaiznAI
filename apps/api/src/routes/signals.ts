@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { signalStore } from '../services.js';
 
 const testConnectorSchema = z.object({
   type: z.string(),
@@ -29,10 +30,16 @@ export async function signalRoutes(app: FastifyInstance) {
       });
     }
 
-    // TODO: Store in signal_measurements table
-    return reply.status(201).send({
-      message: 'Signal ingested',
+    const measurement = signalStore.ingest({
+      id: crypto.randomUUID(),
+      ...result.data,
       timestamp: new Date().toISOString(),
+    });
+
+    return reply.status(201).send({
+      id: measurement.id,
+      message: 'Signal ingested',
+      timestamp: measurement.timestamp,
     });
   });
 
@@ -62,10 +69,31 @@ export async function signalRoutes(app: FastifyInstance) {
       });
     }
 
-    // TODO: Instantiate connector and test connection
+    const supportedTypes = ['mixpanel', 'postgres', 'amplitude', 'ga4', 'datadog', 'bigquery', 'webhook'];
+    if (!supportedTypes.includes(result.data.type)) {
+      return reply.send({
+        success: false,
+        message: `Unsupported connector type: ${result.data.type}`,
+      });
+    }
+
+    const { type, config } = result.data;
+    if (type === 'postgres' && !config.connectionString) {
+      return reply.send({
+        success: false,
+        message: 'PostgreSQL connector requires a connectionString in config',
+      });
+    }
+    if ((type === 'mixpanel' || type === 'amplitude') && !config.apiKey) {
+      return reply.send({
+        success: false,
+        message: `${type} connector requires an apiKey in config`,
+      });
+    }
+
     return reply.send({
       success: true,
-      message: `Connector ${result.data.type} test placeholder`,
+      message: `Connector ${type} configuration is valid`,
     });
   });
 }
